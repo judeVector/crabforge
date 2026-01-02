@@ -23,3 +23,7 @@ path = "server/hyper-server.rs"
 [[bin]]
 name = "hyper-client"
 path = "client/hyper-client.rs"
+
+[[bin]]
+name = "hyper-proxy"
+path = "proxy/hyper-proxy.rs"
