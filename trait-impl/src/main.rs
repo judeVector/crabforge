@@ -1,13 +1,45 @@
 use std::{thread::sleep, time::Duration};
 
-struct Progress<Iter> {
+const CLEAR: &str = "\x1B[2J\x1B[1;1H";
+
+struct Unbounded;
+struct Bounded {
+    bound: usize,
+    delims: (char, char),
+}
+
+struct Progress<Iter, Bound> {
     iter: Iter,
     count: usize,
+    bound: Option<usize>,
+    delims: (char, char),
 }
 
 impl<Iter> Progress<Iter> {
     fn new(iter: Iter) -> Self {
-        Progress { iter, count: 0 }
+        Progress {
+            iter,
+            count: 0,
+            bound: None,
+            delims: ('[', ']'),
+        }
+    }
+}
+
+impl<Iter> Progress<Iter>
+where
+    Iter: ExactSizeIterator,
+{
+    pub fn with_bound(mut self) -> Self {
+        self.bound = Some(self.iter.len());
+        self
+    }
+}
+
+impl<Iter> Progress<Iter> {
+    pub fn with_delims(mut self, delims: (char, char)) -> Self {
+        self.delims = delims;
+        self
     }
 }
 
@@ -18,7 +50,23 @@ where
     type Item = Iter::Item;
 
     fn next(&mut self) -> Option<Self::Item> {
-        println!("Printing {}", "*".repeat(self.count));
+        println!("{}", CLEAR);
+
+        match self.bound {
+            Some(bound) => {
+                println!(
+                    "{}{}{}{}",
+                    self.delims.0,
+                    "*".repeat(self.count),
+                    " ".repeat(bound - self.count),
+                    self.delims.1
+                )
+            }
+            None => {
+                println!("{}", "*".repeat(self.count))
+            }
+        }
+
         self.count += 1;
 
         self.iter.next()
@@ -40,9 +88,15 @@ fn expected_calculation(_n: &i32) {
 }
 
 fn main() {
+    let brkts = ('<', '>');
+
+    for n in (0..).progress().with_delims(brkts) {
+        expected_calculation(&n);
+    }
+
     let v = vec![1, 2, 3, 4, 5, 6];
 
-    for n in v.iter().progress() {
+    for n in v.iter().progress().with_bound().with_delims(brkts) {
         expected_calculation(n);
     }
 }
