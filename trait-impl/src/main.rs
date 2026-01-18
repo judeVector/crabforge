@@ -1,3 +1,4 @@
+mod error_trait;
 use std::{thread::sleep, time::Duration};
 
 const CLEAR: &str = "\x1B[2J\x1B[1;1H";
