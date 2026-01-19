@@ -1,0 +1,12 @@
+[package]
+name = "firezone-cli"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.100"
+clap = "4.5.54"
+rpassword = "7.4.0"
+secrecy = "0.10.3"
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.22", features = ["parking_lot"] }
