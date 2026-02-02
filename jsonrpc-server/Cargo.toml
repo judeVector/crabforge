@@ -1,0 +1,21 @@
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+
+[workspace]
+members = [
+    "proxy",
+    "server"
+]
+
+resolver = "3"
+
+[workspace.dependencies]
+anyhow = "1.0.100"
+jsonrpsee = { version = "0.26.0", features = ["server", "macros", "http-client"] }
+tokio = { version = "1.49.0", features = ["full"] }
+tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }
+axum = { version = "0.8.8", features = ["http1", "tokio"] }
+reqwest = { version = "0.13.1", features = ["json"] }
+bytes = "1.11.0"
+http-body-util = "0.1.3"
