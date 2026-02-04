@@ -6,7 +6,6 @@ edition = "2024"
 [dependencies]
 anyhow.workspace = true
 axum.workspace = true
-# bytes.workspace = true
 http-body-util.workspace = true
 reqwest.workspace = true
 tokio.workspace = true
