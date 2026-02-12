@@ -16,26 +16,37 @@ impl<'a> Iterator for StrSplit<'a> {
     type Item = &'a str;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if let Some(ref mut remainder) = self.remainder {
-            if let Some(next_delim) = remainder.find(self.delimiter) {
-                let until_delimiter = &remainder[..next_delim];
-                *remainder = &remainder[(next_delim + self.delimiter.len())..];
-                Some(until_delimiter)
-            } else {
-                self.remainder.take()
+        let remainder = self.remainder.as_mut()?;
+
+        if self.delimiter.is_empty() {
+            if remainder.is_empty() {
+                return self.remainder.take();
             }
+            let ch = &remainder[..1];
+            *remainder = &remainder[1..];
+            return Some(ch);
+        }
+
+        if let Some(next_delim) = remainder.find(self.delimiter) {
+            let until_delimiter = &remainder[..next_delim];
+            *remainder = &remainder[(next_delim + self.delimiter.len())..];
+            Some(until_delimiter)
         } else {
-            None
+            self.remainder.take()
         }
     }
+
     // fn next(&mut self) -> Option<Self::Item> {
-    //     let remainder = self.remainder.as_mut()?;
-    //     if let Some(next_delim) = remainder.find(self.delimiter) {
-    //         let until_delimiter = &remainder[..next_delim];
-    //         *remainder = &remainder[(next_delim + self.delimiter.len())..];
-    //         Some(until_delimiter)
+    //     if let Some(ref mut remainder) = self.remainder {
+    //         if let Some(next_delim) = remainder.find(self.delimiter) {
+    //             let until_delimiter = &remainder[..next_delim];
+    //             *remainder = &remainder[(next_delim + self.delimiter.len())..];
+    //             Some(until_delimiter)
+    //         } else {
+    //             self.remainder.take()
+    //         }
     //     } else {
-    //         self.remainder.take()
+    //         None
     //     }
     // }
 }
