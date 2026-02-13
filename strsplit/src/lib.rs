@@ -25,15 +25,6 @@ where
     fn next(&mut self) -> Option<Self::Item> {
         let remainder = self.remainder.as_mut()?;
 
-        // if self.delimiter.is_empty() {
-        //     if remainder.is_empty() {
-        //         return self.remainder.take();
-        //     }
-        //     let ch = &remainder[..1];
-        //     *remainder = &remainder[1..];
-        //     return Some(ch);
-        // }
-
         if let Some((delim_start, delim_end)) = self.delimiter.find_next(remainder) {
             let until_delimiter = &remainder[..delim_start];
             *remainder = &remainder[delim_end..];
@@ -60,6 +51,9 @@ where
 
 impl Delimiter for &str {
     fn find_next(&self, s: &str) -> Option<(usize, usize)> {
+        if self.is_empty() {
+            return Some((0, 0));
+        }
         s.find(self).map(|start| (start, start + self.len()))
     }
 }
