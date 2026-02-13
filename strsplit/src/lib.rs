@@ -1,10 +1,10 @@
-struct StrSplit<'a> {
-    remainder: Option<&'a str>,
-    delimiter: &'a str,
+struct StrSplit<'haystack, D> {
+    remainder: Option<&'haystack str>,
+    delimiter: D,
 }
 
-impl<'a> StrSplit<'a> {
-    fn new(haystack: &'a str, delimiter: &'a str) -> Self {
+impl<'haystack, D> StrSplit<'haystack, D> {
+    fn new(haystack: &'haystack str, delimiter: D) -> Self {
         Self {
             remainder: Some(haystack),
             delimiter,
@@ -12,24 +12,31 @@ impl<'a> StrSplit<'a> {
     }
 }
 
-impl<'a> Iterator for StrSplit<'a> {
-    type Item = &'a str;
+pub trait Delimiter {
+    fn find_next(&self, s: &str) -> Option<(usize, usize)>;
+}
+
+impl<'haystack, D> Iterator for StrSplit<'haystack, D>
+where
+    D: Delimiter,
+{
+    type Item = &'haystack str;
 
     fn next(&mut self) -> Option<Self::Item> {
         let remainder = self.remainder.as_mut()?;
 
-        if self.delimiter.is_empty() {
-            if remainder.is_empty() {
-                return self.remainder.take();
-            }
-            let ch = &remainder[..1];
-            *remainder = &remainder[1..];
-            return Some(ch);
-        }
+        // if self.delimiter.is_empty() {
+        //     if remainder.is_empty() {
+        //         return self.remainder.take();
+        //     }
+        //     let ch = &remainder[..1];
+        //     *remainder = &remainder[1..];
+        //     return Some(ch);
+        // }
 
-        if let Some(next_delim) = remainder.find(self.delimiter) {
-            let until_delimiter = &remainder[..next_delim];
-            *remainder = &remainder[(next_delim + self.delimiter.len())..];
+        if let Some((delim_start, delim_end)) = self.delimiter.find_next(remainder) {
+            let until_delimiter = &remainder[..delim_start];
+            *remainder = &remainder[delim_end..];
             Some(until_delimiter)
         } else {
             self.remainder.take()
@@ -51,6 +58,26 @@ impl<'a> Iterator for StrSplit<'a> {
     // }
 }
 
+impl Delimiter for &str {
+    fn find_next(&self, s: &str) -> Option<(usize, usize)> {
+        s.find(self).map(|start| (start, start + self.len()))
+    }
+}
+
+impl Delimiter for char {
+    fn find_next(&self, s: &str) -> Option<(usize, usize)> {
+        s.char_indices()
+            .find(|(_, c)| c == self)
+            .map(|(start, _)| (start, start + self.len_utf8()))
+    }
+}
+
+pub fn until_char(s: &str, c: char) -> &str {
+    StrSplit::new(s, c)
+        .next()
+        .expect("StrSplit always gives at least one result")
+}
+
 #[cfg(test)]
 mod it_works {
     use super::*;
@@ -66,6 +93,18 @@ mod it_works {
     fn tail() {
         let haystack = "a b c d ";
         let letters: Vec<_> = StrSplit::new(&haystack, " ").collect();
+        assert_eq!(letters, vec!["a", "b", "c", "d", ""]);
+    }
+
+    #[test]
+    fn until_char_test() {
+        assert_eq!(until_char("hello world", 'o'), "hell");
+    }
+
+    #[test]
+    fn max() {
+        let haystack = "a b c d ";
+        let letters: Vec<&str> = haystack.split(" ").collect();
         assert_eq!(letters, vec!["a", "b", "c", "d", ""]);
     }
 }
