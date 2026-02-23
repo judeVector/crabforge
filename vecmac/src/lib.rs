@@ -1,21 +1,40 @@
 #[macro_export]
 macro_rules! avec {
-    () => {
-        Vec::new()
-    };
-    ($($element:expr),+ $(,)?) => {{
-        let mut vs = Vec::new();
+    // () => {
+    //     Vec::new()
+    // };
+
+    // ($($element:expr),+ $(,)?) => {{
+    //     let mut vs = Vec::new();
+    //     $(vs.push($element);)*
+    //     vs
+    // }};
+
+    ($($element:expr),*) => {{
+        // check that count is const
+        const _: usize = $crate::avec![@COUNT; $($element),*];
+
+        #[allow(unused_mut)]
+        let mut vs = Vec::with_capacity($crate::avec![@COUNT; $($element),*]);
         $(vs.push($element);)*
         vs
     }};
+
+    ($($element:expr,)*) => {{
+        $crate::avec![$($element),*]
+    }};
+
     ($element:expr; $count:expr) => {{
         let mut vs = Vec::new();
-        let x = $element;
-        for _ in 0..$count {
-            vs.push(x.clone())
-        }
+        vs.resize($count, $element);
         vs
-    }}
+    }};
+
+
+    (@COUNT; $($element:expr),*) => {
+        <[()]>::len(&[$($crate::avec![@SUBST; $element]),*])
+    };
+    (@SUBST; $_element:expr) => { () }
 }
 
 #[cfg(test)]
