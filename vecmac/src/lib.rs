@@ -12,10 +12,10 @@ macro_rules! avec {
 
     ($($element:expr),*) => {{
         // check that count is const
-        const _: usize = $crate::avec![@COUNT; $($element),*];
+        const _: usize = $crate::count![@COUNT; $($element),*];
 
         #[allow(unused_mut)]
-        let mut vs = Vec::with_capacity($crate::avec![@COUNT; $($element),*]);
+        let mut vs = Vec::with_capacity($crate::count![@COUNT; $($element),*]);
         $(vs.push($element);)*
         vs
     }};
@@ -29,10 +29,13 @@ macro_rules! avec {
         vs.resize($count, $element);
         vs
     }};
+}
 
-
+#[doc(hidden)]
+#[macro_export]
+macro_rules! count {
     (@COUNT; $($element:expr),*) => {
-        <[()]>::len(&[$($crate::avec![@SUBST; $element]),*])
+        <[()]>::len(&[$($crate::count![@SUBST; $element]),*])
     };
     (@SUBST; $_element:expr) => { () }
 }
