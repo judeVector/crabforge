@@ -20,12 +20,12 @@ where
     }
 }
 
-pub fn flatten<I>(iter: I) -> Flatten<I>
+pub fn flatten<I>(iter: I) -> Flatten<I::IntoIter>
 where
-    I: Iterator,
+    I: IntoIterator,
     I::Item: IntoIterator,
 {
-    Flatten::new(iter)
+    Flatten::new(iter.into_iter())
 }
 
 impl<O> Iterator for Flatten<O>
@@ -36,12 +36,17 @@ where
     type Item = <O::Item as IntoIterator>::Item;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if let Some(ref mut inner_iter) = self.inner {
-            if let Some(i) = inner_iter.next() {
-                return Some(i);
-            }
-            self.inner = None;
-        };
+        loop {
+            if let Some(ref mut inner_iter) = self.inner {
+                if let Some(i) = inner_iter.next() {
+                    return Some(i);
+                }
+                self.inner = None;
+            };
+
+            let next_inner_iter = self.outer.next()?.into_iter();
+            self.inner = Some(next_inner_iter);
+        }
     }
 }
 
@@ -56,10 +61,7 @@ mod test {
 
     #[test]
     fn empty_wide() {
-        assert_eq!(
-            flatten(vec![Vec::<()>::new(), vec![], vec![]].into_iter()).count(),
-            0
-        );
+        assert_eq!(flatten(vec![Vec::<()>::new(), vec![], vec![]]).count(), 0);
     }
 
     #[test]
@@ -74,6 +76,6 @@ mod test {
 
     #[test]
     fn two_wide() {
-        assert_eq!(flatten(vec![vec!["a"], vec!["b"]].into_iter()).count(), 2);
+        assert_eq!(flatten(vec![vec!["a"], vec!["b"]]).count(), 2);
     }
 }
