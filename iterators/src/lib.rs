@@ -1,14 +1,16 @@
 pub struct Flatten<O>
 where
     O: Iterator,
+    O::Item: IntoIterator,
 {
     outer: O,
-    inner: Option<O::Item>,
+    inner: Option<<O::Item as IntoIterator>::IntoIter>,
 }
 
 impl<O> Flatten<O>
 where
     O: Iterator,
+    O::Item: IntoIterator,
 {
     fn new(iter: O) -> Self {
         Flatten {
@@ -21,6 +23,7 @@ where
 pub fn flatten<I>(iter: I) -> Flatten<I>
 where
     I: Iterator,
+    I::Item: IntoIterator,
 {
     Flatten::new(iter)
 }
