@@ -4,7 +4,8 @@ where
     O::Item: IntoIterator,
 {
     outer: O,
-    inner: Option<<O::Item as IntoIterator>::IntoIter>,
+    front_iter: Option<<O::Item as IntoIterator>::IntoIter>,
+    back_iter: Option<<O::Item as IntoIterator>::IntoIter>,
 }
 
 impl<O> Flatten<O>
@@ -15,7 +16,8 @@ where
     fn new(iter: O) -> Self {
         Flatten {
             outer: iter,
-            inner: None,
+            front_iter: None,
+            back_iter: None,
         }
     }
 }
@@ -37,15 +39,18 @@ where
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
-            if let Some(ref mut inner_iter) = self.inner {
-                if let Some(i) = inner_iter.next() {
+            if let Some(ref mut front_iter) = self.front_iter {
+                if let Some(i) = front_iter.next() {
                     return Some(i);
                 }
-                self.inner = None;
+                self.front_iter = None;
             };
 
-            let next_inner_iter = self.outer.next()?.into_iter();
-            self.inner = Some(next_inner_iter);
+            if let Some(next_inner) = self.outer.next() {
+                self.front_iter = Some(next_inner.into_iter())
+            } else {
+                return self.back_iter.as_mut()?.next();
+            }
         }
     }
 }
@@ -58,15 +63,18 @@ where
 {
     fn next_back(&mut self) -> Option<Self::Item> {
         loop {
-            if let Some(ref mut inner_iter) = self.inner {
-                if let Some(i) = inner_iter.next_back() {
+            if let Some(ref mut back_iter) = self.back_iter {
+                if let Some(i) = back_iter.next_back() {
                     return Some(i);
                 }
-                self.inner = None;
+                self.back_iter = None;
             };
 
-            let next_inner_iter = self.outer.next_back()?.into_iter();
-            self.inner = Some(next_inner_iter);
+            if let Some(next_back_inner) = self.outer.next_back() {
+                self.back_iter = Some(next_back_inner.into_iter())
+            } else {
+                return self.front_iter.as_mut()?.next_back();
+            }
         }
     }
 }
@@ -129,5 +137,10 @@ mod test {
         assert_eq!(iter.next_back(), Some("c"));
         assert_eq!(iter.next(), None);
         assert_eq!(iter.next_back(), None);
+    }
+
+    #[test]
+    fn deep() {
+        assert_eq!(flatten(flatten(vec![vec![vec![0, 1]]])).count(), 2);
     }
 }
