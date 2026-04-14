@@ -1,3 +1,22 @@
+pub trait IteratorExt: Iterator {
+    fn our_flatten(self) -> Flatten<Self>
+    where
+        Self: Sized,
+        Self::Item: IntoIterator;
+}
+
+impl<T> IteratorExt for T
+where
+    T: Iterator,
+{
+    fn our_flatten(self) -> Flatten<Self>
+    where
+        Self::Item: IntoIterator,
+    {
+        flatten(self)
+    }
+}
+
 pub struct Flatten<O>
 where
     O: Iterator,
@@ -142,5 +161,10 @@ mod test {
     #[test]
     fn deep() {
         assert_eq!(flatten(flatten(vec![vec![vec![0, 1]]])).count(), 2);
+    }
+
+    #[test]
+    fn ext() {
+        assert_eq!(vec![vec![0, 1]].into_iter().our_flatten().count(), 2);
     }
 }
